@@ -1,34 +1,29 @@
-// File: controller/AuthController.java
 package controller;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import koneksi.Koneksi;
 import model.User;
 import org.mindrot.jbcrypt.BCrypt;
-import util.Koneksi;
+import java.sql.*;
 
 public class AuthController {
-    public User login(String username, String password) {
-        String sql = "SELECT id_user, nama, username, password, role FROM users WHERE username = ?";
-        try (Connection con = Koneksi.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+    private User currentUser;
+    public User login(String username, String password) throws SQLException {
+        String sql = "SELECT * FROM users WHERE username=?";
+        try (PreparedStatement ps = Koneksi.getConnection().prepareStatement(sql)) {
             ps.setString(1, username);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next() && BCrypt.checkpw(password, rs.getString("password"))) {
-                    User user = new User();
-                    user.setIdUser(rs.getInt("id_user"));
-                    user.setNama(rs.getString("nama"));
-                    user.setUsername(rs.getString("username"));
-                    user.setPassword(rs.getString("password"));
-                    user.setRole(rs.getString("role"));
-                    AuditLogger.log(user.getIdUser(), "LOGIN", "User login: " + user.getUsername());
-                    return user;
+                if (rs.next() && BCrypt.checkpw(password, rs.getString("password_hash"))) {
+                    currentUser = new User(rs.getInt("id"), rs.getString("nama"), rs.getString("username"), rs.getString("password_hash"), rs.getString("role"), rs.getTimestamp("created_at"));
+                    new AuditLogger().log(currentUser.getId(), "LOGIN", "users", null, username);
+                    return currentUser;
                 }
             }
-        } catch (SQLException | IllegalArgumentException e) {
-            e.printStackTrace();
         }
         return null;
     }
+    public boolean gantiPassword(int userId, String passwordBaru) throws SQLException {
+        String sql = "UPDATE users SET password_hash=? WHERE id=?";
+        try (PreparedStatement ps = Koneksi.getConnection().prepareStatement(sql)) { ps.setString(1, BCrypt.hashpw(passwordBaru, BCrypt.gensalt())); ps.setInt(2, userId); return ps.executeUpdate() > 0; }
+    }
+    public User getCurrentUser() { return currentUser; }
 }

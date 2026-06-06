@@ -1,31 +1,3 @@
-// File: form/DashboardForm.java
 package form;
-
-import controller.DashboardController;
-import java.awt.BorderLayout;
-import java.awt.GridLayout;
-import java.time.LocalDate;
-import java.util.Map;
-import javax.swing.JPanel;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
-import util.UIUtils;
-
-public class DashboardForm extends JPanel {
-    private final DashboardController controller = new DashboardController();
-    private final JPanel cardPemasukan = UIUtils.createKPICard("Pemasukan Bulan Ini", "Rp 0", UIUtils.SUCCESS);
-    private final JPanel cardPengeluaran = UIUtils.createKPICard("Pengeluaran Bulan Ini", "Rp 0", UIUtils.DANGER);
-    private final JPanel cardSaldo = UIUtils.createKPICard("Saldo Keseluruhan", "Rp 0", UIUtils.ACCENT);
-    private final DefaultTableModel model = new DefaultTableModel(new Object[]{"Tanggal", "Jenis", "Kategori", "Nominal", "Keterangan"}, 0);
-
-    public DashboardForm() {
-        setLayout(new BorderLayout(12, 12)); setBackground(UIUtils.BACKGROUND); setBorder(javax.swing.BorderFactory.createEmptyBorder(18, 18, 18, 18));
-        JPanel cards = new JPanel(new GridLayout(1, 3, 12, 12)); cards.setOpaque(false); cards.add(cardPemasukan); cards.add(cardPengeluaran); cards.add(cardSaldo); add(cards, BorderLayout.NORTH);
-        JTable table = new JTable(model); UIUtils.styleTable(table); table.getColumnModel().getColumn(3).setCellRenderer(UIUtils.rightRenderer()); add(UIUtils.wrapTable(table), BorderLayout.CENTER); refreshData();
-    }
-
-    public void refreshData() {
-        LocalDate now = LocalDate.now(); UIUtils.setKPIValue(cardPemasukan, UIUtils.formatRupiah(controller.getTotalPemasukan(now.getMonthValue(), now.getYear()))); UIUtils.setKPIValue(cardPengeluaran, UIUtils.formatRupiah(controller.getTotalPengeluaran(now.getMonthValue(), now.getYear()))); UIUtils.setKPIValue(cardSaldo, UIUtils.formatRupiah(controller.getSaldoKeseluruhan()));
-        model.setRowCount(0); for (Map<String, Object> r : controller.getRecentTransactions(10)) model.addRow(new Object[]{r.get("tanggal"), r.get("jenis"), r.get("nama_kategori"), UIUtils.formatRupiah((double) r.get("nominal")), r.get("keterangan")});
-    }
-}
+import controller.DashboardController;import util.UIUtils;import javax.swing.*;import javax.swing.table.DefaultTableModel;import java.awt.*;import java.util.*;
+public class DashboardForm extends JPanel{private final DashboardController c=new DashboardController();public DashboardForm(){setLayout(new BorderLayout());JPanel p=UIUtils.page("Dashboard");JPanel body=new JPanel(new BorderLayout(12,12));body.setOpaque(false);JPanel kpi=new JPanel(new GridLayout(1,4,12,12));kpi.setOpaque(false);try{kpi.add(UIUtils.createKPICard("Saldo Kas",UIUtils.rupiah(c.saldoKas()),UIUtils.BLUE));kpi.add(UIUtils.createKPICard("Pemasukan Bulan Ini",UIUtils.rupiah(c.pemasukanBulanIni()),UIUtils.GREEN));kpi.add(UIUtils.createKPICard("Pengeluaran Bulan Ini",UIUtils.rupiah(c.pengeluaranBulanIni()),UIUtils.ORANGE));kpi.add(UIUtils.createKPICard("Siswa Menunggak",String.valueOf(c.siswaMenunggak()),UIUtils.RED));}catch(Exception e){for(String s:new String[]{"Saldo Kas","Pemasukan Bulan Ini","Pengeluaran Bulan Ini","Siswa Menunggak"})kpi.add(UIUtils.createKPICard(s,"-",UIUtils.MUTED));}body.add(kpi,BorderLayout.NORTH);JSplitPane split=new JSplitPane(JSplitPane.VERTICAL_SPLIT,new BarChartPanel(),tables());split.setResizeWeight(.55);body.add(split);p.add(body);add(p);}private JComponent tables(){JPanel wrap=new JPanel(new GridLayout(1,2,12,12));DefaultTableModel m=new DefaultTableModel(new String[]{"Tanggal","Jenis","Nominal","Keterangan"},0);DefaultTableModel t=new DefaultTableModel(new String[]{"NIS","Nama","Bulan","Tahun","Nominal"},0);try{for(Object[] r:c.transaksiTerbaru())m.addRow(r);for(Object[] r:c.tunggakan())t.addRow(r);}catch(Exception ignored){}wrap.add(UIUtils.tableScroll(new JTable(m)));wrap.add(UIUtils.tableScroll(new JTable(t)));return wrap;}class BarChartPanel extends JPanel{BarChartPanel(){setPreferredSize(new Dimension(800,260));setBackground(UIUtils.WHITE);setBorder(BorderFactory.createTitledBorder("Pemasukan vs Pengeluaran 6 Bulan"));}protected void paintComponent(Graphics g){super.paintComponent(g);Graphics2D d=(Graphics2D)g;d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);java.util.List<Object[]> data;try{data=c.grafik6Bulan();}catch(Exception e){data=Collections.emptyList();}int x=55,w=30,h=getHeight()-70;if(data.isEmpty())d.drawString("Data grafik belum tersedia",x,80);for(Object[] r:data){double p=((Number)r[1]).doubleValue(),q=((Number)r[2]).doubleValue(),max=Math.max(1,Math.max(p,q));int hp=(int)(h*p/max),hq=(int)(h*q/max);d.setColor(UIUtils.GREEN);d.fillRect(x,getHeight()-40-hp,w,hp);d.setColor(UIUtils.ORANGE);d.fillRect(x+w+4,getHeight()-40-hq,w,hq);d.setColor(UIUtils.NAVY);d.drawString(String.valueOf(r[0]),x-10,getHeight()-18);x+=105;}}}}

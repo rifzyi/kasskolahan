@@ -1,189 +1,32 @@
-// File: util/UIUtils.java
 package util;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Insets;
-import java.text.NumberFormat;
-import java.text.ParseException;
-import java.util.Locale;
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.JTableHeader;
+import javax.swing.table.TableRowSorter;
+import java.awt.*;
+import java.text.NumberFormat;
+import java.util.Locale;
 
-public final class UIUtils {
-    public static final Color PRIMARY = new Color(0x1E3A5F);
-    public static final Color ACCENT = new Color(0x2563EB);
-    public static final Color SUCCESS = new Color(0x10B981);
-    public static final Color DANGER = new Color(0xEF4444);
-    public static final Color WARNING = new Color(0xF59E0B);
-    public static final Color BACKGROUND = new Color(0xF8FAFC);
-    public static final Color BORDER = new Color(0xE2E8F0);
-    private static final Locale ID_LOCALE = new Locale("in", "ID");
+public class UIUtils {
+    public static final Color NAVY = new Color(15, 23, 42), BLUE = new Color(37, 99, 235), CYAN = new Color(6, 182, 212), GREEN = new Color(22, 163, 74), ORANGE = new Color(249, 115, 22), RED = new Color(220, 38, 38), MUTED = new Color(100, 116, 139), WHITE = Color.WHITE;
+    public static final Color SUCCESS = GREEN, DANGER = RED, ACCENT = CYAN, BACKGROUND = new Color(248, 250, 252);
+    public static final Font FONT_TITLE = new Font("SansSerif", Font.BOLD, 22), FONT_BOLD = new Font("SansSerif", Font.BOLD, 14), FONT_PLAIN = new Font("SansSerif", Font.PLAIN, 14);
 
-    private UIUtils() {
+    public static class Option {
+        public int id; public String label;
+        public Option(int id, String label) { this.id = id; this.label = label; }
+        @Override public String toString() { return label; }
     }
 
-    public static JButton createPrimaryButton(String text) { return coloredButton(text, ACCENT); }
-    public static JButton createSuccessButton(String text) { return coloredButton(text, SUCCESS); }
-    public static JButton createDangerButton(String text) { return coloredButton(text, DANGER); }
-
-    public static JButton createSecondaryButton(String text) {
-        JButton button = baseButton(text);
-        button.setForeground(PRIMARY);
-        button.setBackground(Color.WHITE);
-        button.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER), new EmptyBorder(6, 18, 6, 18)));
-        return button;
-    }
-
-    private static JButton coloredButton(String text, Color color) {
-        JButton button = baseButton(text);
-        button.setForeground(Color.WHITE);
-        button.setBackground(color);
-        button.setBorder(new EmptyBorder(7, 18, 7, 18));
-        return button;
-    }
-
-    private static JButton baseButton(String text) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        button.setFocusPainted(false);
-        button.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        return button;
-    }
-
-    public static JTextField createModernTextField(int columns) {
-        JTextField field = new JTextField(columns);
-        field.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        field.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER), new EmptyBorder(7, 9, 7, 9)));
-        return field;
-    }
-
-    public static JTextArea createModernTextArea(int rows, int cols) {
-        JTextArea area = new JTextArea(rows, cols);
-        area.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        area.setLineWrap(true);
-        area.setWrapStyleWord(true);
-        area.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER), new EmptyBorder(7, 9, 7, 9)));
-        return area;
-    }
-
-    public static <T> JComboBox<T> createModernComboBox() {
-        JComboBox<T> combo = new JComboBox<>();
-        combo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        combo.setPreferredSize(new Dimension(180, 34));
-        return combo;
-    }
-
-    public static String formatRupiah(double nominal) {
-        NumberFormat format = NumberFormat.getCurrencyInstance(ID_LOCALE);
-        format.setMaximumFractionDigits(0);
-        return format.format(nominal).replace("Rp", "Rp ").replace(",00", "");
-    }
-
-    public static double parseRupiah(String text) {
-        if (text == null || text.isBlank()) {
-            return 0;
-        }
-        String normalized = text.replace("Rp", "").replace(" ", "").trim();
-        try {
-            return NumberFormat.getNumberInstance(ID_LOCALE).parse(normalized).doubleValue();
-        } catch (ParseException e) {
-            return Double.parseDouble(normalized.replace(".", "").replace(",", "."));
-        }
-    }
-
-    public static JPanel createKPICard(String title, String value, Color accentColor) {
-        JPanel card = new JPanel(new BorderLayout(8, 8));
-        card.setBackground(Color.WHITE);
-        card.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER), new EmptyBorder(18, 18, 18, 18)));
-        JLabel titleLabel = new JLabel(title);
-        titleLabel.setForeground(new Color(0x64748B));
-        titleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        JLabel valueLabel = new JLabel(value);
-        valueLabel.setName("valueLabel");
-        valueLabel.setForeground(accentColor);
-        valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        card.add(titleLabel, BorderLayout.NORTH);
-        card.add(valueLabel, BorderLayout.CENTER);
-        return card;
-    }
-
-    public static void setKPIValue(JPanel card, String value) {
-        for (Component component : card.getComponents()) {
-            if (component instanceof JLabel label && "valueLabel".equals(label.getName())) {
-                label.setText(value);
-            }
-        }
-    }
-
-    public static void styleTable(JTable table) {
-        table.setRowHeight(32);
-        table.setShowVerticalLines(false);
-        table.setGridColor(BORDER);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        table.setSelectionBackground(new Color(0xDBEAFE));
-        table.setSelectionForeground(PRIMARY);
-        table.setFillsViewportHeight(true);
-        JTableHeader header = table.getTableHeader();
-        header.setBackground(PRIMARY);
-        header.setForeground(Color.WHITE);
-        header.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        header.setPreferredSize(new Dimension(0, 38));
-        header.setReorderingAllowed(false);
-    }
-
-    public static JScrollPane wrapTable(JTable table) {
-        styleTable(table);
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBorder(BorderFactory.createLineBorder(BORDER));
-        return scrollPane;
-    }
-
-    public static DefaultTableCellRenderer rightRenderer() {
-        DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
-        renderer.setHorizontalAlignment(SwingConstants.RIGHT);
-        return renderer;
-    }
-
-    public static void showSuccess(Component parent, String message) {
-        JOptionPane.showMessageDialog(parent, message, "Sukses", JOptionPane.INFORMATION_MESSAGE);
-    }
-
-    public static void showError(Component parent, String message) {
-        JOptionPane.showMessageDialog(parent, message, "Error", JOptionPane.ERROR_MESSAGE);
-    }
-
-    public static boolean showConfirm(Component parent, String message) {
-        return JOptionPane.showConfirmDialog(parent, message, "Konfirmasi", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
-    }
-
-    public static JPanel page(String title) {
-        JPanel panel = new JPanel(new BorderLayout(12, 12));
-        panel.setBackground(BACKGROUND);
-        panel.setBorder(new InsetsBorder(18));
-        JLabel label = new JLabel(title);
-        label.setForeground(PRIMARY);
-        label.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        panel.add(label, BorderLayout.NORTH);
-        return panel;
-    }
-
-    private static class InsetsBorder extends EmptyBorder {
-        InsetsBorder(int inset) { super(new Insets(inset, inset, inset, inset)); }
-    }
+    public static String rupiah(double v) { return NumberFormat.getCurrencyInstance(new Locale("id", "ID")).format(v); }
+    public static JLabel formLabel(String text) { JLabel l = new JLabel(text); l.setFont(FONT_BOLD); l.setForeground(NAVY); return l; }
+    public static JTextField textField(int cols) { JTextField f = new JTextField(cols); f.setFont(FONT_PLAIN); f.putClientProperty("JTextField.placeholderText", "Ketik di sini"); return f; }
+    public static JButton button(String text, Color bg) { JButton b = new JButton(text); b.setFont(FONT_BOLD); b.setBackground(bg); b.setForeground(WHITE); b.setFocusPainted(false); return b; }
+    public static JPanel page(String title) { JPanel p = new JPanel(new BorderLayout(12,12)); p.setBackground(BACKGROUND); p.setBorder(new EmptyBorder(18,18,18,18)); JLabel h = new JLabel(title); h.setFont(FONT_TITLE); h.setForeground(NAVY); p.add(h, BorderLayout.NORTH); return p; }
+    public static JPanel card() { JPanel c = new JPanel(new BorderLayout(8,8)); c.setBackground(WHITE); c.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(226,232,240)), new EmptyBorder(14,14,14,14))); return c; }
+    public static JPanel createKPICard(String title, String value, Color accent) { JPanel c = card(); c.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0,5,0,0,accent), new EmptyBorder(14,14,14,14))); JLabel t = new JLabel(title); t.setForeground(MUTED); t.setFont(FONT_BOLD); JLabel v = new JLabel(value); v.setForeground(NAVY); v.setFont(new Font("SansSerif", Font.BOLD, 20)); c.add(t, BorderLayout.NORTH); c.add(v, BorderLayout.CENTER); return c; }
+    public static JScrollPane tableScroll(JTable table) { table.setRowHeight(28); table.getTableHeader().setFont(FONT_BOLD); JScrollPane s = new JScrollPane(table); s.setBorder(BorderFactory.createLineBorder(new Color(226,232,240))); return s; }
+    public static JPanel toolbar(JComponent... components) { JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8)); p.setOpaque(false); for (JComponent c: components) p.add(c); return p; }
+    public static void bindSearch(JTextField field, TableRowSorter<?> sorter) { field.getDocument().addDocumentListener(new javax.swing.event.DocumentListener(){ public void insertUpdate(javax.swing.event.DocumentEvent e){filter();} public void removeUpdate(javax.swing.event.DocumentEvent e){filter();} public void changedUpdate(javax.swing.event.DocumentEvent e){filter();} void filter(){ sorter.setRowFilter(field.getText().isBlank()? null : RowFilter.regexFilter("(?i)" + java.util.regex.Pattern.quote(field.getText()))); }}); }
+    public static JLabel schoolLogo(int size) { JLabel l = new JLabel("SKM", SwingConstants.CENTER); l.setPreferredSize(new Dimension(size, size)); l.setOpaque(true); l.setBackground(BLUE); l.setForeground(WHITE); l.setFont(new Font("SansSerif", Font.BOLD, Math.max(12, size/4))); return l; }
 }

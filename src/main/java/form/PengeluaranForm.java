@@ -1,28 +1,3 @@
-// File: form/PengeluaranForm.java
 package form;
-
-import com.github.lgooddatepicker.components.DatePicker;
-import controller.PengeluaranController;
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
-import java.time.LocalDate;
-import javax.swing.JComboBox;
-import javax.swing.JPanel;
-import javax.swing.JTable;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.table.DefaultTableModel;
-import model.KategoriPengeluaran;
-import model.Pengeluaran;
-import util.UIUtils;
-
-public class PengeluaranForm extends JPanel {
-    private final PengeluaranController controller=new PengeluaranController(); private final DatePicker from=new DatePicker(), to=new DatePicker(); private final DefaultTableModel model=new DefaultTableModel(new Object[]{"ID","Tanggal","Kategori","Nominal","Keterangan"},0); private final JTable table=new JTable(model);
-    public PengeluaranForm(){ setLayout(new BorderLayout(12,12)); setBackground(UIUtils.BACKGROUND); setBorder(javax.swing.BorderFactory.createEmptyBorder(18,18,18,18)); from.setDate(LocalDate.now().withDayOfMonth(1)); to.setDate(LocalDate.now()); JPanel bar=new JPanel(new FlowLayout(FlowLayout.LEFT)); bar.setOpaque(false); javax.swing.JButton apply=UIUtils.createPrimaryButton("Terapkan"), add=UIUtils.createSuccessButton("Tambah"), edit=UIUtils.createPrimaryButton("Edit"), del=UIUtils.createDangerButton("Hapus"); bar.add(from);bar.add(to);bar.add(apply);bar.add(add);bar.add(edit);bar.add(del); add(bar,BorderLayout.NORTH); UIUtils.styleTable(table); table.getColumnModel().getColumn(3).setCellRenderer(UIUtils.rightRenderer()); add(UIUtils.wrapTable(table),BorderLayout.CENTER); apply.addActionListener(e->refresh()); add.addActionListener(e->dialog(null)); edit.addActionListener(e->edit()); del.addActionListener(e->delete()); refresh(); }
-    private void refresh(){ model.setRowCount(0); for(Pengeluaran p:controller.getAll(from.getDate(),to.getDate())) model.addRow(new Object[]{p.getIdPengeluaran(),p.getTanggal(),p.getNamaKategori(),UIUtils.formatRupiah(p.getNominal()),p.getKeterangan()}); }
-    private JComboBox<KategoriPengeluaran> kategori(){ JComboBox<KategoriPengeluaran> cb=UIUtils.createModernComboBox(); for(KategoriPengeluaran k:controller.getKategori()) cb.addItem(k); cb.setRenderer((l,v,i,s,f)->new javax.swing.JLabel(v==null?"":v.getNamaKategori())); return cb; }
-    private void dialog(Pengeluaran old){ DatePicker tgl=new DatePicker(); tgl.setDate(old==null?LocalDate.now():old.getTanggal()); JComboBox<KategoriPengeluaran> kat=kategori(); JTextField nominal=UIUtils.createModernTextField(16); JTextArea ket=UIUtils.createModernTextArea(3,16); JPanel p=new JPanel(new GridLayout(0,2,8,8)); p.add(new javax.swing.JLabel("Tanggal"));p.add(tgl);p.add(new javax.swing.JLabel("Kategori"));p.add(kat);p.add(new javax.swing.JLabel("Nominal"));p.add(nominal);p.add(new javax.swing.JLabel("Keterangan"));p.add(new javax.swing.JScrollPane(ket)); if(old!=null){nominal.setText(UIUtils.formatRupiah(old.getNominal()));ket.setText(old.getKeterangan());} if(javax.swing.JOptionPane.showConfirmDialog(this,p,"Form Pengeluaran",javax.swing.JOptionPane.OK_CANCEL_OPTION)==javax.swing.JOptionPane.OK_OPTION){ Pengeluaran pe=old==null?new Pengeluaran():old; pe.setTanggal(tgl.getDate()); pe.setIdKategoriPengeluaran(((KategoriPengeluaran)kat.getSelectedItem()).getIdKategoriPengeluaran()); pe.setNominal(UIUtils.parseRupiah(nominal.getText())); pe.setKeterangan(ket.getText()); if(old==null?controller.insert(pe):controller.update(pe))refresh(); } }
-    private void edit(){ int r=table.getSelectedRow(); if(r<0)return; Pengeluaran p=new Pengeluaran(); p.setIdPengeluaran((int)model.getValueAt(r,0)); p.setTanggal((LocalDate)model.getValueAt(r,1)); dialog(p); }
-    private void delete(){ int r=table.getSelectedRow(); if(r>=0&&UIUtils.showConfirm(this,"Hapus pengeluaran?")){controller.delete((int)model.getValueAt(r,0));refresh();} }
-}
+import controller.PengeluaranController;import model.*;import util.UIUtils;import com.github.lgooddatepicker.components.DatePicker;import javax.swing.*;import javax.swing.table.DefaultTableModel;import java.awt.*;import java.io.File;import java.sql.Date;import java.time.LocalDate;
+public class PengeluaranForm extends JPanel{PengeluaranController c=new PengeluaranController();DefaultTableModel m=new DefaultTableModel(new String[]{"ID","Tanggal","Kategori","Nominal","Keterangan"},0);public PengeluaranForm(User u){setLayout(new BorderLayout());JPanel p=UIUtils.page("Transaksi Pengeluaran");DatePicker a=new DatePicker(),b=new DatePicker();a.setDate(LocalDate.now().minusMonths(1));b.setDate(LocalDate.now());JTextField kat=UIUtils.textField(10),nom=UIUtils.textField(10),ket=UIUtils.textField(20),pegawai=UIUtils.textField(12);JButton sim=UIUtils.button("Input Biaya Operasional",UIUtils.BLUE),gaji=UIUtils.button("Cetak Slip Gaji PDF",UIUtils.ORANGE),filter=UIUtils.button("Filter",UIUtils.CYAN);sim.addActionListener(e->{try{c.simpan(new Pengeluaran(0,Date.valueOf(LocalDate.now()),1,Double.parseDouble(nom.getText()),ket.getText(),u.getId()));load(a.getDate(),b.getDate(),kat.getText());}catch(Exception ex){JOptionPane.showMessageDialog(this,ex.getMessage());}});gaji.addActionListener(e->{try{c.cetakSlipGajiPdf(new File("slip-gaji.pdf"),pegawai.getText(),Double.parseDouble(nom.getText()));JOptionPane.showMessageDialog(this,"Slip PDF dibuat");}catch(Exception ex){JOptionPane.showMessageDialog(this,ex.getMessage());}});filter.addActionListener(e->load(a.getDate(),b.getDate(),kat.getText()));p.add(UIUtils.toolbar(UIUtils.formLabel("Dari"),a,UIUtils.formLabel("Sampai"),b,UIUtils.formLabel("Kategori"),kat,UIUtils.formLabel("Nominal"),nom,UIUtils.formLabel("Ket"),ket,UIUtils.formLabel("Pegawai"),pegawai,sim,gaji,filter),BorderLayout.NORTH);p.add(UIUtils.tableScroll(new JTable(m)));add(p);load(a.getDate(),b.getDate(),"");}void load(LocalDate a,LocalDate b,String k){m.setRowCount(0);try{for(Object[] r:c.riwayat(a,b,k))m.addRow(r);}catch(Exception ignored){}}}
